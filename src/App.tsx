@@ -1,97 +1,84 @@
-import { DndContext } from '@dnd-kit/core'
-import DroppableArea from './DroppableArea';
-import DraggableItem from './DraggableItem';
-import { useState } from 'react'
-// import reactLogo from './assets/react.svg'
-// import viteLogo from '/vite.svg'
-import './App.css'
-import ListItem from './List-item'
+import { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, useNavigate, useParams, Navigate } from 'react-router-dom';
+import List from './List';
+import { Category, Todo } from './Datamodel';
+import { generateGUID } from './Utilities';
 
 function App() {
-  const [count, setCount] = useState(0)
 
-  function btnClick() {
-    setCount(count + 1);
-  }
+  const [categories, setCategories] = useState<Category[]>([]);
+  // on start up
+  useEffect(() => {
+    const savedData = localStorage.getItem('appData');
+    if (savedData) {
+      setCategories(JSON.parse(savedData));
+    } else {
+      // Initialize with some default data
+      setCategories([
+        { id: generateGUID(), name: 'Work', todos: [] },
+        { id: generateGUID(), name: 'Personal', todos: [] },
+        { id: generateGUID(), name: 'Hobbies', todos: [] },
+      ]);
+    }
+  }, []);
 
-  interface Todo {
-    id: string;
-    text: string;
-    checked: boolean;
-  }
+  // whenever the categories are changed
+  useEffect(() => {
+    if (categories.length > 0) {
+      localStorage.setItem('appData', JSON.stringify(categories));
+    }
+  }, [categories]);
 
-  const [todos, setTodos] = useState<Todo[]>([
-    { id: '1', text: 'Learn React', checked: false },
-    { id: '2', text: 'Build a Todo App', checked: false },
-    { id: '3', text: 'Add Drag and Drop', checked: false },
-  ]);
-
-  const handleCheck = (id: string) => {
-    setTodos(todos.map(todo => 
-      todo.id === id ? { ...todo, checked: !todo.checked } : todo
-    ));
+  const updateTodos = (categoryId: string, updatedTodos: Todo[]) => {
+    setCategories((prev) =>
+      prev.map((cat) =>
+        cat.id === categoryId ? { ...cat, todos: updatedTodos } : cat
+      )
+    );
   };
-
-  const handleTextChange = (id: string, newText: string) => { 
-    setTodos(todos.map(todo =>
-      todo.id === id ? {...todo, text: newText} : todo
-    ));
-  }
-
-  const handleDragEnd = (event: any) => {
-    console.log('Drag event:', event);  // Log the event
-    const { active, over } = event;
-
-    // Ensure "over" is not null before proceeding
-    if (!over || active.id === over.id) return;
-  
-    const oldIndex = todos.findIndex((todo) => todo.id === active.id);
-    const newIndex = todos.findIndex((todo) => todo.id === over.id);
-  
-    const reorderedTodos = [...todos];
-    const [movedItem] = reorderedTodos.splice(oldIndex, 1);
-    reorderedTodos.splice(newIndex, 0, movedItem);
-  
-    setTodos(reorderedTodos);
-  };
-  
-  
 
   return (
-    
-      /* <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a> 
-      </div>*/
-      <div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => btnClick()}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-        <DndContext onDragEnd={handleDragEnd}>
-            {todos.map((todo) => (
-              <DroppableArea id={todo.id}>
-                <DraggableItem key={todo.id} id={todo.id}>
-                  <ListItem id={todo.id} text={todo.text} checked={todo.checked} onCheck={handleCheck} onTextChange={handleTextChange}/>
-                </DraggableItem>
-              </DroppableArea>
-            ))}
-        </DndContext>
-
-      </div>
-     <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </div>
-  )
+    <Router>
+      <Routes>
+        <Route path="/" element={<CategoryView categories={categories}/>} />
+        <Route path="/:categoryName" element={<ListView categories={categories} updateTodos={updateTodos}/>} />
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+function CategoryView({ categories }: { categories: Category[]}) {
+  const navigate = useNavigate();
+  return (
+    <div>
+      <h1>Select a Category:</h1>
+      {categories.map((category) => (
+        <button
+          key={category.id}
+          onClick={() => navigate(`/${category.name.toLowerCase()}`)}
+        >
+          {category.name}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ListView({ categories, updateTodos }: { categories: Category[], updateTodos: (categoryId: string, todos: Todo[]) => void}) {
+  const { categoryName } = useParams<{ categoryName: string }>();
+  const navigate = useNavigate();
+  
+  const category = categories.find((cat) => cat.name.toLowerCase() === categoryName?.toLowerCase());
+
+  if (!category) return <Navigate to="/" />;
+
+  return (
+    <div>
+      <button onClick={() => navigate('/')}>Back to Categories</button>
+      <h2>{categoryName}</h2>
+      <List categoryId={category.id} todos={category.todos} onUpdateTodos={updateTodos} />
+    </div>
+  );
+}
+
+export default App;

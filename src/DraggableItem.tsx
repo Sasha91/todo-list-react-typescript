@@ -10,7 +10,7 @@ function DraggableItem({ id, children }: DraggableItemProps) {
   const { attributes, listeners, setNodeRef } = useDraggable({ id });
   
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+    <div style={{ display: 'flex', width: '100%', alignItems: 'center', gap: '1rem' }}>
       {/* Drag Handle */}
       <div
         ref={setNodeRef}
