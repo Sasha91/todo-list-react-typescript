@@ -8,7 +8,6 @@ import { Todo } from './Datamodel';
 import { generateGUID } from './Utilities';
 import { useRef } from 'react';
 
-
 interface ListProps {
     categoryId: string;
     todos: Todo[];

@@ -1,5 +1,5 @@
 import { FaCircle, FaCheckCircle } from 'react-icons/fa'
-import { ForwardedRef, forwardRef, useState } from 'react'
+import { forwardRef, useState } from 'react'
 
 interface ListItemProps {
     id: string
