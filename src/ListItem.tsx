@@ -35,7 +35,7 @@ const ListItem = forwardRef<HTMLInputElement|null, ListItemProps> (
             </button> 
             
             <span style={{ marginLeft: '0.5rem', fontSize: 'inherit' }}>
-                <input 
+                <input className='white-text'
                     type="text" 
                     value={editableText} 
                     placeholder='write a todo item'
